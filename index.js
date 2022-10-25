@@ -1,16 +1,15 @@
+require('dotenv').config({path: './.env'})
+
 const express = require('express')
+const cors = require('cors')
+const morgan = require('morgan')
 
 const app = express()
 
-const port = 3333
+app.use(cors())
+app.use(morgan())
+app.use(express.urlencoded({extended: false}))
 
-app.get('/', (req, res) => {
-  return res.json({
-    success: true,
-    message: 'Backend is running well'
-  })
-})
-
-app.listen(port, () => {
+app.listen(8888, () => {
   console.log('App listening on port 8888')
 })
