@@ -1,5 +1,6 @@
 const userModel = require('../models/users.model')
 const profileModel = require('../models/profile.model')
+const forgotPasswordModel = require('../models/forgotPassword.model')
 
 const argon = require('argon2')
 const jwt = require('jsonwebtoken')
@@ -55,5 +56,70 @@ exports.register = async (req, res) => {
       success: false,
       message: 'Error : ' + err.message
     })    
+  }
+}
+
+exports.forgotPassword = async (req, res) => {
+  try {
+    const { customAlphabet } = await import('nanoid')
+    const nanoid = customAlphabet('012345678', 6)
+    req.body.code = nanoid()
+
+    const user = await userModel.selectUserByEmail(req.body.email)
+    if (user.rowCount) {
+      const selectedUser = user.rows[0]
+      req.body.userId = selectedUser.id
+      
+      const forgot = await forgotPasswordModel.insertForgotPassword(req.body)
+
+      // mailer handler
+
+      if (forgot.rowCount) {
+        return res.json({
+          success: true,
+          message: 'Forgot password request has been sent!'
+        })
+      }
+    }
+    return res.status(400).json({
+      success: false,
+      message: 'Email not found!'
+    })
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error : ' + err.message
+    })    
+  }
+}
+
+exports.resetPassword = async (req, res) => {
+  try {
+    const user = await forgotPasswordModel.selectForgotPassword(req.body)
+    if (user.rowCount) {
+      const selectedUser = user.rows[0]
+      req.body.password = await argon.hash(req.body.newPassword)
+      
+      const updatePassword = await userModel.updateUserById(selectedUser.userId, req.body)
+      if (updatePassword.rowCount) {
+        return res.json({
+          success: true,
+          message: 'Reset password success!'
+        })
+      }
+      return res.status(500).json({
+        success: true,
+        message: 'Unexpected error on updating data!'
+      })
+    }
+    return res.status(400).json({
+      success: false,
+      message: 'Email or code cannot be identified!'
+    })
+  } catch (err) {
+    return res.status(500).json({
+      success: false,
+      message: 'Error : ' + err.message
+    }) 
   }
 }
