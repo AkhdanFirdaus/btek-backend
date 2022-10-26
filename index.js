@@ -10,6 +10,8 @@ app.use(cors())
 app.use(morgan())
 app.use(express.urlencoded({extended: false}))
 
+app.use('/', require('./routes/index'))
+
 app.listen(8888, () => {
   console.log('App listening on port 8888')
 })
