@@ -48,10 +48,13 @@ exports.readAllUsers = async (req, res) => {
 
 exports.readUserById = async (req, res) => {
   try {
-    const user = await userModel.readUserById(req.params.id)
+    const user = await userModel.selectUserById(req.params.id)
+    if (!user.rows[0]) {
+      throw new Error('User not found')
+    }
     return res.json({
       success: true,
-      message: 'Detail user',
+      message: 'User detail successfully retreived',
       results: user.rows[0]
     })
   } catch (err) {
