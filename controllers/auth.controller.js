@@ -68,24 +68,23 @@ exports.forgotPassword = async (req, res) => {
     req.body.code = nanoid()
 
     const user = await userModel.selectUserByEmail(req.body.email)
-    if (user.rowCount) {
-      const selectedUser = user.rows[0]
-      req.body.userId = selectedUser.id
-      
-      const forgot = await forgotPasswordModel.insertForgotPassword(req.body)
+    const selectedUser = user.rows[0]
 
-      // mailer handler
-
-      if (forgot.rowCount) {
-        return res.json({
-          success: true,
-          message: 'Forgot password request has been sent!'
-        })
-      }
+    if (!selectedUser) {
+      return res.status(400).json({
+        success: false,
+        message: 'Email not found!'
+      })
     }
-    return res.status(400).json({
-      success: false,
-      message: 'Email not found!'
+
+    req.body.userId = selectedUser.id
+    await forgotPasswordModel.insertForgotPassword(req.body)
+
+    // mailer handler
+
+    return res.json({
+      success: true,
+      message: 'Forgot password request has been sent!'
     })
   } catch (err) {
     return res.status(500).json({
