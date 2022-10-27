@@ -38,19 +38,21 @@ exports.login = async (req, res) => {
 
 exports.register = async (req, res) => {
   try {
+    const find = await userModel.selectUserByEmail(req.body.email)
+    if (find.rows[0]) {
+      throw new Error('Email already taken')
+    }
     req.body.password = await argon.hash(req.body.password)
     const user = await userModel.insertUser(req.body)
-    if (user.rowCount) {
-      const createdUser = user.rows[0]
-      req.body.userId = createdUser.id
-      const profile = await profileModel.insertProfile(req.body)
-      if (profile.rowCount) {
-        return res.json({
-          success: true,
-          message: 'Register successfully'
-        })
-      }
+    if (!user.rows[0]) {
+      await profileModel.insertProfile(req.body)
     }
+    const createdUser = user.rows[0]
+    return res.json({
+      success: true,
+      message: 'Register successfully',
+      results: createdUser
+    })
   } catch (err) {
     return res.status(500).json({
       success: false,

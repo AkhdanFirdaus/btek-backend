@@ -7,7 +7,7 @@ const morgan = require('morgan')
 const app = express()
 
 app.use(cors())
-app.use(morgan())
+app.use(morgan('dev'))
 app.use(express.urlencoded({extended: false}))
 
 app.use('/', require('./routes/index'))
